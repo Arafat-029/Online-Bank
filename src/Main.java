@@ -1,17 +1,13 @@
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
+import presentation.BankAppMenus;
+import services.BanqueSystem;
+import java.util.Scanner;
 
 public class Main {
     public static void main(String[] args) {
-        String url = "jdbc:mysql://localhost:3306/banque"; 
-        String user = "arafat";
-        String password = "Hassane123";
+        Scanner scanner = new Scanner(System.in);
+        BanqueSystem banqueSystem = new BanqueSystem();
 
-        try (Connection connection = DriverManager.getConnection(url, user, password)) {
-            System.out.println("Connexion à la base de données réussie !");
-        } catch (SQLException e) {
-            System.err.println("Erreur de connexion à la base de données : " + e.getMessage());
-        }
+        BankAppMenus bankAppMenus = new BankAppMenus(scanner, banqueSystem);
+        bankAppMenus.showLoginMenu();
     }
 }
