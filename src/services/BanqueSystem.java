@@ -34,7 +34,7 @@ public class BanqueSystem {
         if (user != null && user.getPassword().equals(password)) {
             return user;
         }
-        return null; 
+        return null;
     }
 
     public void createUser(String firstName, String lastName, String email, String password, Role role) {
@@ -42,9 +42,42 @@ public class BanqueSystem {
         dalUser.addUser(user);
     }
 
+    public boolean updateUser(int userId, String firstName, String lastName, String email, String password, Role role) {
+        User user = dalUser.getUserById(userId);
+        if (user != null) {
+            user.setFirstName(firstName);
+            user.setLastName(lastName);
+            user.setEmail(email);
+            user.setPassword(password);
+            user.setRole(role);
+            dalUser.updateUser(user);
+            return true;
+        }
+        return false;
+    }
+
+    public boolean deleteUser(int userId) {
+        return dalUser.deleteUser(userId);
+    }
+
     public void createAccount(String accountNumber, double initialBalance, User owner, String accountType) {
         Account account = new Account(accountNumber, initialBalance, owner, accountType);
         dalAccount.addAccount(account);
+    }
+
+    public boolean updateAccount(String accountNumber, double balance, String accountType) {
+        Account account = dalAccount.getAccountByNumber(accountNumber);
+        if (account != null) {
+            account.setBalance(balance);
+            account.setAccountType(accountType);
+            dalAccount.updateAccount(account);
+            return true;
+        }
+        return false;
+    }
+
+    public boolean deleteAccount(String accountNumber) {
+        return dalAccount.deleteAccount(accountNumber);
     }
 
     public boolean deposit(String accountNumber, double amount) {
@@ -99,50 +132,59 @@ public class BanqueSystem {
         return false;
     }
 
-public boolean transfer(String fromAccountNumber, String toAccountNumber, double amount, int userId) {
-    if (amount <= 0) {
-        System.out.println("Amount must be positive.");
-        return false;
+    public boolean transfer(String fromAccountNumber, String toAccountNumber, double amount, int userId) {
+        if (amount <= 0) {
+            System.out.println("Amount must be positive.");
+            return false;
+        }
+
+        Account fromAccount = dalAccount.getAccountByNumber(fromAccountNumber);
+        Account toAccount = dalAccount.getAccountByNumber(toAccountNumber);
+
+        if (fromAccount == null || fromAccount.getOwner().getId() != userId) {
+            System.out.println("Transfer failed. You do not own the source account.");
+            return false;
+        }
+
+        if (toAccount == null) {
+            System.out.println("Transfer failed. Destination account not found.");
+            return false;
+        }
+
+        if (fromAccount.getBalance() < amount) {
+            System.out.println("Transfer failed. Insufficient balance.");
+            return false;
+        }
+
+        fromAccount.setBalance(fromAccount.getBalance() - amount);
+        toAccount.setBalance(toAccount.getBalance() + amount);
+
+        dalAccount.updateAccount(fromAccount);
+        dalAccount.updateAccount(toAccount);
+
+        Transaction transaction = new Transaction(
+            "TXN" + System.currentTimeMillis(),
+            amount,
+            "TRANSFER",
+            LocalDateTime.now(),
+            fromAccount,
+            toAccount
+        );
+        dalTransaction.addTransaction(transaction);
+
+        System.out.println("Transfer successful.");
+        return true;
     }
 
-    Account fromAccount = dalAccount.getAccountByNumber(fromAccountNumber);
-    Account toAccount = dalAccount.getAccountByNumber(toAccountNumber);
-
-    if (fromAccount == null || fromAccount.getOwner().getId() != userId) {
-        System.out.println("Transfer failed. You do not own the source account.");
+    public boolean changePassword(int userId, String oldPassword, String newPassword) {
+        User user = dalUser.getUserById(userId);
+        if (user != null && user.getPassword().equals(oldPassword)) {
+            user.setPassword(newPassword);
+            dalUser.updateUser(user);
+            return true;
+        }
         return false;
     }
-
-    if (toAccount == null) {
-        System.out.println("Transfer failed. Destination account not found.");
-        return false;
-    }
-
-    if (fromAccount.getBalance() < amount) {
-        System.out.println("Transfer failed. Insufficient balance.");
-        return false;
-    }
-
-    fromAccount.setBalance(fromAccount.getBalance() - amount);
-    toAccount.setBalance(toAccount.getBalance() + amount);
-
-    dalAccount.updateAccount(fromAccount);
-    dalAccount.updateAccount(toAccount);
-
-    Transaction transaction = new Transaction(
-        "TXN" + System.currentTimeMillis(),
-        amount,
-        "TRANSFER",
-        LocalDateTime.now(),
-        fromAccount,
-        toAccount
-    );
-    dalTransaction.addTransaction(transaction);
-
-    System.out.println("Transfer successful.");
-    return true;
-}
-
 
     public List<Transaction> getAccountTransactions(String accountNumber) {
         return dalTransaction.getTransactionsByAccount(accountNumber);
@@ -160,5 +202,3 @@ public boolean transfer(String fromAccountNumber, String toAccountNumber, double
         return dalAccount.getAccountByNumber(accountNumber);
     }
 }
-
-

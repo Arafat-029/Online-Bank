@@ -86,14 +86,16 @@ public class DALUser {
         }
     }
 
-    public void deleteUser(int userId) {
+    public boolean deleteUser(int userId) {
         String query = "DELETE FROM users WHERE id = ?";
         try (Connection connection = DBConnection.getConnection();
              PreparedStatement statement = connection.prepareStatement(query)) {
             statement.setInt(1, userId);
-            statement.executeUpdate();
+            int rowsAffected = statement.executeUpdate();
+            return rowsAffected > 0; 
         } catch (SQLException e) {
             e.printStackTrace();
+            return false; 
         }
     }
 }

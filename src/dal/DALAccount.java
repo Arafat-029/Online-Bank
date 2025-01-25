@@ -81,14 +81,16 @@ public class DALAccount {
         }
     }
 
-    public void deleteAccount(String accountNumber) {
+    public boolean deleteAccount(String accountNumber) {
         String query = "DELETE FROM accounts WHERE account_number = ?";
         try (Connection connection = DBConnection.getConnection();
              PreparedStatement statement = connection.prepareStatement(query)) {
             statement.setString(1, accountNumber);
-            statement.executeUpdate();
+            int rowsAffected = statement.executeUpdate();
+            return rowsAffected > 0; 
         } catch (SQLException e) {
             e.printStackTrace();
+            return false; 
         }
     }
 }
