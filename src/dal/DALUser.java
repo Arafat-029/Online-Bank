@@ -48,6 +48,28 @@ public class DALUser {
         return null;
     }
 
+    public User getUserById(int userId) {
+        String query = "SELECT * FROM users WHERE id = ?";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+            stmt.setInt(1, userId);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                return new User(
+                    rs.getInt("id"),
+                    rs.getString("first_name"),
+                    rs.getString("last_name"),
+                    rs.getString("password"),
+                    rs.getString("email"),
+                    Role.valueOf(rs.getString("role"))
+                );
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null; 
+    }
+
     public void updateUser(User user) {
         String query = "UPDATE users SET first_name = ?, last_name = ?, email = ?, password = ?, role = ? WHERE id = ?";
         try (Connection connection = DBConnection.getConnection();
@@ -55,7 +77,7 @@ public class DALUser {
             statement.setString(1, user.getFirstName());
             statement.setString(2, user.getLastName());
             statement.setString(3, user.getEmail());
-            statement.setString(4, user.getPassword()); // À hacher en production !
+            statement.setString(4, user.getPassword()); 
             statement.setString(5, user.getRole().toString());
             statement.setInt(6, user.getId());
             statement.executeUpdate();

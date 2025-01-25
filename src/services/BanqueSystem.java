@@ -17,12 +17,28 @@ public class BanqueSystem {
     private DALAccount dalAccount = new DALAccount();
     private DALTransaction dalTransaction = new DALTransaction();
 
+    public BanqueSystem() {
+        initializeDefaultAdmin();
+    }
+
+    private void initializeDefaultAdmin() {
+        User admin = dalUser.getUserByEmail("admin@example.com");
+        if (admin == null) {
+            createUser("Admin", "User", "admin@example.com", "admin123", Role.ADMIN);
+            System.out.println("Admin par défaut créé : admin@example.com / admin123");
+        }
+    }
+
     public User login(String email, String password) {
-        return dalUser.getUserByEmail(email);
+        User user = dalUser.getUserByEmail(email);
+        if (user != null && user.getPassword().equals(password)) {
+            return user;
+        }
+        return null; 
     }
 
     public void createUser(String firstName, String lastName, String email, String password, Role role) {
-        User user = new User(0, firstName, lastName, password, email, role); 
+        User user = new User(0, firstName, lastName, password, email, role);
         dalUser.addUser(user);
     }
 
@@ -31,64 +47,102 @@ public class BanqueSystem {
         dalAccount.addAccount(account);
     }
 
-    public void deposit(String accountNumber, double amount) {
+    public boolean deposit(String accountNumber, double amount) {
+        if (amount <= 0) {
+            System.out.println("Amount must be positive.");
+            return false;
+        }
+
         Account account = dalAccount.getAccountByNumber(accountNumber);
         if (account != null) {
             account.setBalance(account.getBalance() + amount);
             dalAccount.updateAccount(account);
 
             Transaction transaction = new Transaction(
-                "TXN" + System.currentTimeMillis(), 
+                "TXN" + System.currentTimeMillis(),
                 amount,
                 "DEPOSIT",
                 LocalDateTime.now(),
-                null, 
+                null,
                 account
             );
             dalTransaction.addTransaction(transaction);
+            return true;
         }
+        System.out.println("Account not found.");
+        return false;
     }
 
-    public void withdraw(String accountNumber, double amount) {
+    public boolean withdraw(String accountNumber, double amount) {
+        if (amount <= 0) {
+            System.out.println("Amount must be positive.");
+            return false;
+        }
+
         Account account = dalAccount.getAccountByNumber(accountNumber);
         if (account != null && account.getBalance() >= amount) {
             account.setBalance(account.getBalance() - amount);
             dalAccount.updateAccount(account);
 
             Transaction transaction = new Transaction(
-                "TXN" + System.currentTimeMillis(), 
+                "TXN" + System.currentTimeMillis(),
                 amount,
                 "WITHDRAWAL",
                 LocalDateTime.now(),
                 account,
-                null 
+                null
             );
             dalTransaction.addTransaction(transaction);
+            return true;
         }
+        System.out.println("Withdrawal failed. Insufficient balance or account not found.");
+        return false;
     }
 
-    public void transfer(String fromAccountNumber, String toAccountNumber, double amount) {
-        Account fromAccount = dalAccount.getAccountByNumber(fromAccountNumber);
-        Account toAccount = dalAccount.getAccountByNumber(toAccountNumber);
-
-        if (fromAccount != null && toAccount != null && fromAccount.getBalance() >= amount) {
-            fromAccount.setBalance(fromAccount.getBalance() - amount);
-            toAccount.setBalance(toAccount.getBalance() + amount);
-
-            dalAccount.updateAccount(fromAccount);
-            dalAccount.updateAccount(toAccount);
-
-            Transaction transaction = new Transaction(
-                "TXN" + System.currentTimeMillis(), 
-                amount,
-                "TRANSFER",
-                LocalDateTime.now(),
-                fromAccount,
-                toAccount
-            );
-            dalTransaction.addTransaction(transaction);
-        }
+public boolean transfer(String fromAccountNumber, String toAccountNumber, double amount, int userId) {
+    if (amount <= 0) {
+        System.out.println("Amount must be positive.");
+        return false;
     }
+
+    Account fromAccount = dalAccount.getAccountByNumber(fromAccountNumber);
+    Account toAccount = dalAccount.getAccountByNumber(toAccountNumber);
+
+    if (fromAccount == null || fromAccount.getOwner().getId() != userId) {
+        System.out.println("Transfer failed. You do not own the source account.");
+        return false;
+    }
+
+    if (toAccount == null) {
+        System.out.println("Transfer failed. Destination account not found.");
+        return false;
+    }
+
+    if (fromAccount.getBalance() < amount) {
+        System.out.println("Transfer failed. Insufficient balance.");
+        return false;
+    }
+
+    fromAccount.setBalance(fromAccount.getBalance() - amount);
+    toAccount.setBalance(toAccount.getBalance() + amount);
+
+    dalAccount.updateAccount(fromAccount);
+    dalAccount.updateAccount(toAccount);
+
+    Transaction transaction = new Transaction(
+        "TXN" + System.currentTimeMillis(),
+        amount,
+        "TRANSFER",
+        LocalDateTime.now(),
+        fromAccount,
+        toAccount
+    );
+    dalTransaction.addTransaction(transaction);
+
+    System.out.println("Transfer successful.");
+    return true;
+}
+
 
     public List<Transaction> getAccountTransactions(String accountNumber) {
         return dalTransaction.getTransactionsByAccount(accountNumber);
@@ -97,4 +151,14 @@ public class BanqueSystem {
     public List<Account> getUserAccounts(int userId) {
         return dalAccount.getAccountsByUserId(userId);
     }
+
+    public User getUserById(int userId) {
+        return dalUser.getUserById(userId);
+    }
+
+    public Account getAccountByNumber(String accountNumber) {
+        return dalAccount.getAccountByNumber(accountNumber);
+    }
 }
+
+
