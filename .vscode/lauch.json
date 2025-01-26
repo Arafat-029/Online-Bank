@@ -5,7 +5,7 @@
             "type": "java",
             "name": "Launch Main",
             "request": "launch",
-            "mainClass": "projetbanque.Main",
+            "mainClass": "Main",
             "vmArgs": "--module-path /home/arafat/javafx-sdk-23.0.2/lib --add-modules javafx.controls,javafx.fxml"
         }
     ]
