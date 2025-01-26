@@ -1,13 +1,19 @@
-import presentation.BankAppMenus;
-import services.BanqueSystem;
-import java.util.Scanner;
+import javafx.application.Application;
+import javafx.scene.Scene;
+import javafx.scene.control.Label;
+import javafx.stage.Stage;
 
-public class Main {
+public class Main extends Application {
+    @Override
+    public void start(Stage primaryStage) {
+        Label label = new Label("Hello, JavaFX!");
+        Scene scene = new Scene(label, 300, 200);
+        primaryStage.setTitle("Test JavaFX");
+        primaryStage.setScene(scene);
+        primaryStage.show();
+    }
+
     public static void main(String[] args) {
-        Scanner scanner = new Scanner(System.in);
-        BanqueSystem banqueSystem = new BanqueSystem();
-
-        BankAppMenus bankAppMenus = new BankAppMenus(scanner, banqueSystem);
-        bankAppMenus.showLoginMenu();
+        launch(args);
     }
 }
