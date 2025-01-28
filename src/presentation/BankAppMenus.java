@@ -21,7 +21,7 @@ public class BankAppMenus {
 
     public void showLoginMenu() {
         while (true) {
-            System.out.println("=== Welcome to OnlineBank ===");
+            System.out.println("=== Welcome ===");
             System.out.println("1. Log in");
             System.out.println("2. Exit application");
             System.out.print("Choose an option: ");
